@@ -34,6 +34,8 @@ class WC_Gateway_SellixPay extends WC_Payment_Gateway
 		add_action('woocommerce_api_sellix_webhook_handler', [$this, 'webhook_handler']);
 		
 		$this->x_merchant = $this->get_option('x_merchant');
+		$this->completed_order_status = $this->get_option('completed_order_status');
+		$this->custom_attribution_id = $this->get_option('custom_attribution_id');
 	}
 	
 	public function is_valid_for_use()
@@ -113,6 +115,22 @@ class WC_Gateway_SellixPay extends WC_Payment_Gateway
 				'For example if your Sellix account has two merchants (1. Jack, 2. James) and you want to make API requests as James, you need to pass the X-Sellix-Merchant header with value James to able to authenticate as different stores',
 				'default' => '',
 			],
+			'completed_order_status' => [ 
+				'type'          => 'select',
+				'label'         => __('The Order Status to set in WooCommerce once payment has been received', 'sellix-pay'),
+				'options'	=> [
+					'Completed'	=> 'completed',
+					'Processing'	=> 'processing'
+				],
+				'default' => 'completed'
+			],
+			'custom_attribution_id' => [
+				'title' => __('Custom Attribution Id', 'sellix-pay'),
+				'type' => 'text',
+				'description' => __('If you have a custom attribution id that should be associated with your Sellix payments.', 'sellix-pay'),
+        'default' => '',
+        'desc_tip' => true,
+			]
 		];
 	}
 
@@ -128,6 +146,10 @@ class WC_Gateway_SellixPay extends WC_Payment_Gateway
 			'origin' => 'WOOCOMMERCE',
 			'custom_attribution_id' => 'REBRANDEDIO'
 		];
+
+		if (!empty($this->custom_attribution_id)) {
+			$params['custom_attribution_id'] = $this->custom_attribution_id;
+		}
 
 		$route = "/v1/payments";
 		$response = $this->sellix_post_authenticated_json_request($route, $params);
@@ -222,9 +244,7 @@ class WC_Gateway_SellixPay extends WC_Payment_Gateway
 			$this->log->add('sellix', 'Order #' . $viWcID . ' (' . $sellix_order['uniqid'] . '). Status: ' . $sellix_order['status']);
 
 			if ($sellix_order['status'] == 'COMPLETED') {
-				// update the order status to 'processing' to enabled Setplex plugin to complete the transaction.
-				$order->update_status('processing', sprintf(__('Payment Received', 'sellix-pay')));
-				// $this->complete_order($viWcID);
+				$this->complete_order($viWcID);
 				//$order->payment_complete();
 			} elseif ($sellix_order['status'] == 'WAITING_FOR_CONFIRMATIONS') {
 				$order->update_status('on-hold', sprintf(__('Awaiting crypto currency confirmations', 'sellix-pay')));
@@ -288,6 +308,6 @@ class WC_Gateway_SellixPay extends WC_Payment_Gateway
 	public function complete_order($wc_id) {
 		global $woocommerce;
 		$order = wc_get_order($wc_id);
-		$order->update_status('completed');
+		$order->update_status($this->completed_order_status);
 	}
 }
