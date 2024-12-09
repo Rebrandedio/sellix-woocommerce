@@ -35,7 +35,6 @@ class WC_Gateway_SellixPay extends WC_Payment_Gateway
 		
 		$this->x_merchant = $this->get_option('x_merchant');
 		$this->completed_order_status = $this->get_option('completed_order_status');
-		$this->custom_attribution_id = $this->get_option('custom_attribution_id');
 	}
 	
 	public function is_valid_for_use()
@@ -122,14 +121,7 @@ class WC_Gateway_SellixPay extends WC_Payment_Gateway
 					'Completed'	=> 'completed',
 					'Processing'	=> 'processing'
 				],
-				'default' => 'completed'
-			],
-			'custom_attribution_id' => [
-				'title' => __('Custom Attribution Id', 'sellix-pay'),
-				'type' => 'text',
-				'description' => __('If you have a custom attribution id that should be associated with your Sellix payments.', 'sellix-pay'),
-        'default' => '',
-        'desc_tip' => true,
+				'default' => 'processing'
 			]
 		];
 	}
@@ -146,10 +138,6 @@ class WC_Gateway_SellixPay extends WC_Payment_Gateway
 			'origin' => 'WOOCOMMERCE',
 			'custom_attribution_id' => 'REBRANDEDIO'
 		];
-
-		if (!empty($this->custom_attribution_id)) {
-			$params['custom_attribution_id'] = $this->custom_attribution_id;
-		}
 
 		$route = "/v1/payments";
 		$response = $this->sellix_post_authenticated_json_request($route, $params);
