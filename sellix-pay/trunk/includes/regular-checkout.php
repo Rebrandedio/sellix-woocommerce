@@ -126,6 +126,7 @@ class WC_Gateway_SellixPay extends WC_Payment_Gateway
 			'email' => $order->get_billing_email(),
 			'value' => $order->get_total(),
 			'origin' => 'WOOCOMMERCE',
+			'custom_attribution_id' => 'REBRANDEDIO'
 		];
 
 		$route = "/v1/payments";
@@ -221,7 +222,9 @@ class WC_Gateway_SellixPay extends WC_Payment_Gateway
 			$this->log->add('sellix', 'Order #' . $viWcID . ' (' . $sellix_order['uniqid'] . '). Status: ' . $sellix_order['status']);
 
 			if ($sellix_order['status'] == 'COMPLETED') {
-				$this->complete_order($viWcID);
+				// update the order status to 'processing' to enabled Setplex plugin to complete the transaction.
+				$order->update_status('processing', sprintf(__('Payment Received', 'sellix-pay')));
+				// $this->complete_order($viWcID);
 				//$order->payment_complete();
 			} elseif ($sellix_order['status'] == 'WAITING_FOR_CONFIRMATIONS') {
 				$order->update_status('on-hold', sprintf(__('Awaiting crypto currency confirmations', 'sellix-pay')));
