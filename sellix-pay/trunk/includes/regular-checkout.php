@@ -34,7 +34,6 @@ class WC_Gateway_SellixPay extends WC_Payment_Gateway
 		add_action('woocommerce_api_sellix_webhook_handler', [$this, 'webhook_handler']);
 		
 		$this->x_merchant = $this->get_option('x_merchant');
-		$this->completed_order_status = $this->get_option('completed_order_status');
 	}
 	
 	public function is_valid_for_use()
@@ -113,15 +112,6 @@ class WC_Gateway_SellixPay extends WC_Payment_Gateway
 				'description' => __('If you have more than one shop (merchant) under your Sellix account, you can send API requests with their authorization by passing theX-Sellix-Merchant header to each request.', 'sellix-pay').' '.
 				'For example if your Sellix account has two merchants (1. Jack, 2. James) and you want to make API requests as James, you need to pass the X-Sellix-Merchant header with value James to able to authenticate as different stores',
 				'default' => '',
-			],
-			'completed_order_status' => [ 
-				'type'          => 'select',
-				'label'         => __('The Order Status to set in WooCommerce once payment has been received', 'sellix-pay'),
-				'options'	=> [
-					'Completed'	=> 'completed',
-					'Processing'	=> 'processing'
-				],
-				'default' => 'processing'
 			]
 		];
 	}
@@ -129,14 +119,14 @@ class WC_Gateway_SellixPay extends WC_Payment_Gateway
 	public function generate_sellix_payment($order)
 	{
 		$params = [
+			'custom_attribution_id' => 'REBRANDEDIO',
 			'title' => $this->order_id_prefix . $order->get_id(),
 			'currency' => $order->get_currency(),
 			'return_url' => $this->get_return_url($order),
 			'webhook' => add_query_arg('wc_id', $order->get_id(), $this->webhook_url),
 			'email' => $order->get_billing_email(),
 			'value' => $order->get_total(),
-			'origin' => 'WOOCOMMERCE',
-			'custom_attribution_id' => 'REBRANDEDIO'
+			'origin' => 'WOOCOMMERCE'
 		];
 
 		$route = "/v1/payments";
@@ -296,6 +286,6 @@ class WC_Gateway_SellixPay extends WC_Payment_Gateway
 	public function complete_order($wc_id) {
 		global $woocommerce;
 		$order = wc_get_order($wc_id);
-		$order->update_status($this->completed_order_status);
+		$order->update_status('processing', __('Payment received and processing', 'sellix-pay'));
 	}
 }
