@@ -223,7 +223,7 @@ class WC_Gateway_SellixPay extends WC_Payment_Gateway
 
 			if ($sellix_order['status'] == 'COMPLETED') {
 				$this->complete_order($viWcID);
-				//$order->payment_complete();
+				$order->payment_complete();
 			} elseif ($sellix_order['status'] == 'WAITING_FOR_CONFIRMATIONS') {
 				$order->update_status('on-hold', sprintf(__('Awaiting crypto currency confirmations', 'sellix-pay')));
 			} elseif ($sellix_order['status'] == 'PARTIAL') {
